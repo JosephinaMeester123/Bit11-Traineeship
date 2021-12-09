@@ -13,7 +13,7 @@ binned.raw.counts.csv <- args[1]
 binned.csv <- args[2]
 chr.csv <- args[3]
 basename <- args[4]
-seqFF <- as.numeric(args[5])
+# seqFF <- as.numeric(args[5])
 refdir <- args[6]
 
 X_corr_csv <- read.csv(paste(refdir,"/","X_correction.csv",sep=""),header=T)
