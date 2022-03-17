@@ -32,7 +32,7 @@ for line in cram_list:
 file_object.close()
 
 ################################################################################
-# Loop over files in sample_list.txt
+# Loop over files in sample_list.txt to create PBS script per sample and perform counting
 print("Looping over lines in sample_list")
 with open ("sample_list.txt", "r") as sample_list:
         for filename in sample_list:
