@@ -50,16 +50,20 @@ with open ("sample_list.txt", "r") as sample_list:
                         pbs_file.write("#PBS -N WGS_count \n")
                         pbs_file.write("#PBS -o /home/jmeester/WGS_Jeannette/Testing/" + sample + ".count.stdout.$PBS_JOBID \n")
                         pbs_file.write("#PBS -e /home/jmeester/WGS_Jeannette/Testing/" + sample + ".count.stderror.$PBS_JOBID \n")
-                        pbs_file.write("#PBS -m abe \n")
+                        pbs_file.write("#PBS -m a \n")
                         pbs_file.write("#PBS -q batch \n")
                         pbs_file.write("#PBS -M josephina.meester@uantwerpen.be \n")
                         pbs_file.write("#PBS -V \n")
                         pbs_file.write("#PBS -A default \n")
                         #pbs_file.write("echo 'Start Time : ' `date` \n")
-                        pbs_file.write("/opt/NGS/binaries/samtools/1.9/samtools view -b --input-fmt-option required_fields=0x100 -F 0x100 -T /opt/NGS/References/hs38DH/genome/hs38DH.fa " + filename +$
-                Popen(["qsub", pbs_scriptname])
+                        pbs_file.write("/opt/NGS/binaries/samtools/1.9/samtools view -b --input-fmt-option required_fields=0x100 -F 0x100 -T /opt/NGS/References/hs38DH/genome/hs38DH.fa " + filename \
++ " chr1:1-500000 | /opt/NGS/binaries/BedTools/2.28.0/bin/coverageBed -F 0.5001 -sorted -counts -b stdin -a /home/jmeester/Internship/windows1kb.bed -g /home/jmeester/Internship/genome.txt")
+		Popen(["qsub", pbs_scriptname])
                 #copy output to results folder
 ################################################################################
+#sleep 5 sec
+time.sleep(5)
+
 # end time
 t1 = time.time()
 # print running time
