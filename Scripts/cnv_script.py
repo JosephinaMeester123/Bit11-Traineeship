@@ -1,7 +1,15 @@
 #!/usr/bin/python3
+
+################################################################################
+# command + arguments:
+# python /home/jmeester/Internship/Scripts/cnv_script.py input_dir output_dir emailaddress
+
+# example:
+# python /home/jmeester/Internship/Scripts/cnv_script.py /home/jmeester/WGS_Jeannette/Cram/ /home/jmeester/WGS_Jeannette/Testing/ josephina.meester@uantwerpen.be
+
 ################################################################################
 # Load dependencies
-import os, time
+import os, time, sys
 from subprocess import Popen, PIPE, STDOUT
 
 ################################################################################
@@ -9,26 +17,34 @@ from subprocess import Popen, PIPE, STDOUT
 t0 = time.time()
 
 ################################################################################
+# Get input arguments
+input_dir=sys.argv[1]
+output_dir=sys.argv[2]
+email=sys.argv[3]
+
+#print(input_dir)
+#print(output_dir)
+#print(email)
+
+################################################################################
 # Create a new folder
-newdir = "/home/jmeester/WGS_Jeannette/Testing/"
-if not os.path.exists(newdir):
-        os.mkdir(newdir)
-print("Changing directory to WGS_Jeannette/Testing folder...")
-os.chdir(newdir)
-print("\nCurrent working directory: ", os.getcwd())
+if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+#print("Changing directory to output_dir")
+os.chdir(output_dir)
+print("Current working directory: " + os.getcwd())
 
 ################################################################################
 # Iterate over the list of filenames and directories
-cram_dir = "/home/jmeester/WGS_Jeannette/Cram/"
-cram_list = os.listdir(cram_dir)
-print("Files and folders in {} :".format(cram_dir))
+cram_list = os.listdir(input_dir)
+print("cram-files in {} :".format(input_dir))
 if os.path.exists("/home/jmeester/WGS_Jeannette/Testing/sample_list.txt"):
         os.remove("/home/jmeester/WGS_Jeannette/Testing/sample_list.txt")
 file_object=open("sample_list.txt", "a")
 for line in cram_list:
         if line.endswith(".cram"):
                 print(line)
-                file_object.write(cram_dir + line + "\n")
+                file_object.write(input_dir + line + "\n")
 file_object.close()
 
 ################################################################################
@@ -43,26 +59,26 @@ with open ("sample_list.txt", "r") as sample_list:
                 pbs_scriptname=sample + "_pbs.sh"
                 with open(pbs_scriptname, "w") as pbs_file:
                         pbs_file.write("#!/usr/bin/env bash \n")
-                        pbs_file.write("#PBS -d /home/jmeester/WGS_Jeannette \n")
+                        pbs_file.write("#PBS -d /home/jmeester \n")
                         pbs_file.write("#PBS -l nodes=1:ppn=4 \n")
                         pbs_file.write("#PBS -l mem=12gb \n")
                         pbs_file.write("#PBS -l walltime=48:00:00 \n")
                         pbs_file.write("#PBS -N WGS_count \n")
-                        pbs_file.write("#PBS -o /home/jmeester/WGS_Jeannette/Testing/" + sample + ".count.stdout.$PBS_JOBID \n")
-                        pbs_file.write("#PBS -e /home/jmeester/WGS_Jeannette/Testing/" + sample + ".count.stderror.$PBS_JOBID \n")
+                        pbs_file.write("#PBS -o " + output_dir + sample + ".count.stdout.$PBS_JOBID \n")
+                        pbs_file.write("#PBS -e " + output_dir + sample + ".count.stderror.$PBS_JOBID \n")
                         pbs_file.write("#PBS -m a \n")
                         pbs_file.write("#PBS -q batch \n")
-                        pbs_file.write("#PBS -M josephina.meester@uantwerpen.be \n")
+                        pbs_file.write("#PBS -M " + email + "\n")
                         pbs_file.write("#PBS -V \n")
                         pbs_file.write("#PBS -A default \n")
-                        #pbs_file.write("echo 'Start Time : ' `date` \n")
                         pbs_file.write("/opt/NGS/binaries/samtools/1.9/samtools view -b --input-fmt-option required_fields=0x100 -F 0x100 -T /opt/NGS/References/hs38DH/genome/hs38DH.fa " + filename \
-+ " chr1:1-500000 | /opt/NGS/binaries/BedTools/2.28.0/bin/coverageBed -F 0.5001 -sorted -counts -b stdin -a /home/jmeester/Internship/windows1kb.bed -g /home/jmeester/Internship/genome.txt")
++ " | /opt/NGS/binaries/BedTools/2.28.0/bin/coverageBed -F 0.5001 -sorted -counts -b stdin -a /home/jmeester/Internship/windows1kb.bed -g /home/jmeester/Internship/genome.txt")
+			pbs_file.write("\n")
 		Popen(["qsub", pbs_scriptname])
-                #copy output to results folder
+
 ################################################################################
-#sleep 5 sec
-time.sleep(5)
+#sleep 3 sec to have enough time to submit all jobs
+time.sleep(3)
 
 # end time
 t1 = time.time()
