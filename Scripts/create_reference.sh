@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
-#make adjustments next time: loop over files in a folder, which is easier if you don't know how many samples are in the folder
-paste /home/jmeester/WGS_Jeannette/Testing/*.pbs.biomina.be | awk '{print $1, $2, $3, $4, $8, $12, $16, $20, $24, $28, $32, $36}' > /home/jmeester/Internship/Reference_test/count_allsamples.txt
+#for each sample, extract the 4th column, which contains the counts
+for filename in /home/jmeester/WGS_Jeannette/Testing/*.count.stdout.*; do
+	awk '{print $4} ' $filename > $filename".count"
+done
+
+#paste together windows1kb file, which contains locations of bins, with the counts of all samples
+paste /home/jmeester/Internship/windows1kb.bed /home/jmeester/WGS_Jeannette/Testing/*.count > /home/jmeester/Internship/Reference_test/count_allsamples.txt
 
 awk 'BEGIN{OFS=","} {T=0; V=0;
 	for(N=4; N<=NF; N++) T+=$N; T/=(NF-3);
