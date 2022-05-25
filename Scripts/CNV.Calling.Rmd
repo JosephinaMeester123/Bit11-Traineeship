@@ -35,7 +35,7 @@ options(warn=1)
 #args <- commandArgs(TRUE)
 #bin_file <- args[1]
 #samplename <- args[2]
-samplename <- 127869
+samplename <- 106282
 #gender <- args[3]
 gender <- "MALE"
 #ref_map <- args[4]
@@ -44,10 +44,10 @@ gender <- "MALE"
 output_map <- "C:/Users/jeann/Desktop/CBS/"
 
 #tresholdadel <- as.numeric(args[6])
-tresholdadel <- as.numeric(-2)
+tresholdadel <- as.numeric(-4)
 
 #tresholdadup <- as.numeric(args[7])
-tresholdadup <- as.numeric(2)
+tresholdadup <- as.numeric(3)
 
 #tresholdxdel <- as.numeric(args[8])
 tresholdxdel <- as.numeric(-3)
@@ -99,14 +99,14 @@ panel.fill<-function(x,y,mychr,CBSsegments){
   
   myLwd = 0.4
   
-  diagnosticBand <- read.csv("C:/Users/jeann/Desktop/diagnosticBand.b37.csv",header=TRUE)
-  cytoBand <- read.csv("C:/Users/jeann/Desktop/cytoBand_hg38.csv",header=TRUE)
+  diagnosticBand <- read.csv("C:/Users/jeann/Desktop/CBS/diagnosticBand.b37.csv",header=TRUE)
+  cytoBand <- read.csv("C:/Users/jeann/Desktop/CBS/cytoBand_hg38.csv",header=TRUE)
   
   cyto.H = 0.10
   cyto.Y = 0.07 #0.85
   
-  cyto.chr <-  subset(cytoBand,cytoBand$CHR==as.character(mychr))
-  diag.chr <-  subset(diagnosticBand,diagnosticBand$CHR==as.character(mychr))
+  cyto.chr <- subset(cytoBand,cytoBand$CHR==as.character(mychr))
+  diag.chr <- subset(diagnosticBand,diagnosticBand$CHR==as.character(mychr))
   cyto.max <- max(cyto.chr$END)
   
   chrSegments$loc.start = chrSegments$loc.start/cyto.max
@@ -190,8 +190,8 @@ panel.fill<-function(x,y,mychr,CBSsegments){
 ```{r}
 # read data
 #bin_data = read.table(bin_file,as.is=T,header=T,sep=",")
-bin_data <- read.table("C:/Users/jeann/Desktop/127869.count.stdout.5890115.pbs.biomina.be",as.is=T,header=F,sep="\t")
-names(bin_data)[1:4] <- list("CHR", "BIN.START", "BIN.END", "COUNT")
+bin_data <- read.table("C:/Users/jeann/Desktop/CBS/106282.count.autosomal.norm",as.is=T,header=F,sep=" ")
+names(bin_data)[1:7] <- list("CHR", "BIN.START", "BIN.END", "COUNT", "TOTALCOUNTSAMPLE", "TOTALCOUNTALL", "NORM_COUNT")
 
 sample.count <- names(bin_data)[7]
 #sample.gc.auto.X.F.gr10M <- sub("COUNT","GC.AUTO.X.F.GR10M",sample.count)
@@ -204,7 +204,7 @@ sample.count <- names(bin_data)[7]
 # ref data
 ## input file is loaded here --> contains header, csv file
 #ref_bin_file = paste(ref_map,"referenceNormals.stats.binned.csv",sep="/");
-ref_data <- read.table("C:/Users/jeann/Desktop/referenceNormals.stats.binned.csv",as.is=T,header=F,sep=",")
+ref_data <- read.table("C:/Users/jeann/Desktop/CBS/referenceNormals.stats.binned_norm.csv",as.is=T,header=F,sep=",")
 names(ref_data)[1:5] <- list("CHR", "BIN.START", "BIN.END", "COUNT.MEAN", "COUNT.SD")
 ```
 
@@ -242,8 +242,8 @@ achrom_full$CHR <- gsub("[a-zA-Z ]", "", achrom_full$CHR)
 #	sd_full$z = (sd_full[,16] - sd_full[35]) / sd_full[,36]
 
 # no gender data
-achrom_full$ratio = achrom_full[,4] / achrom_full[,5]
-achrom_full$z = (achrom_full[,4] - achrom_full[,5]) / achrom_full[,6]
+achrom_full$ratio = achrom_full[,7] / achrom_full[,8]
+achrom_full$z = (achrom_full[,7] - achrom_full[,8]) / achrom_full[,9]
 achrom_full$logR = log2(achrom_full$ratio)
 ```
 
@@ -257,7 +257,7 @@ aSeg$Sample <- samplename
 
 CNVtable = aSeg
 
-CNVtable$loc.end = CNVtable$loc.end + 999
+CNVtable$loc.end = CNVtable$loc.end + 499
 ```
 
 
@@ -419,7 +419,7 @@ if(dim(trueCNVs)[1]>0){
     list = rbind(list,c(samplename,chr,paste(start,end,sep="-"),dim(cnv_full)[1],dim(cnv_full)[1]-sum(!is.finite(cnv_full$ratio)),
                         round(mean(cnv_full[is.finite(cnv_full$z),"z"],na.rm=T),2),round(mean(cnv_full[is.finite(cnv_full$ratio),"ratio"],na.rm=T),2)))
     
-    sd_full$pos = sd_full$BIN.START + 25000
+    sd_full$pos = sd_full$BIN.START + 250
     
     dataoutput <- paste(output_map,paste(samplename, paste("chr",chr,sep=""),paste(start,end,sep="-"),'CNVData.csv',sep='.'),sep="/");
     write.table(sd_full,file=dataoutput,sep="\t",row.names=FALSE,quote=F);
