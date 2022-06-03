@@ -19,18 +19,20 @@ chr.csv <- args[3]
 basename <- "C:/Users/jeann/Desktop/CBS/"
 #seqFF <- as.numeric(args[5])
 refdir <- args[6]
+SAMPLE <- 108995
 
 gc_content <- read.table("C:/Users/jeann/Desktop/CBS/bins500bp_gc.bed",as.is=T,header=F,sep="\t")
 colnames(gc_content) <- c('CHR','BIN.START','BIN.END', 'BIN.GC.CONTENT', 'BIN.N.COUNT')
-raw_count <- read.table("C:/Users/jeann/Desktop/CBS/106282.count.autosomal.norm", as.is=T,header=F,sep=" ")
-colnames(raw_count) <- c('CHR','BIN.START','BIN.END', 'count', 'total_sample', 'total_pop', 'COUNT')
-binned.raw <- merge(gc_content,raw_count,by=c('CHR','BIN.START','BIN.END'))
+raw_count <- read.table("C:/Users/jeann/Desktop/CBS/108995.count", as.is=T,header=F,sep="\t")
+colnames(raw_count) <- c('CHR','BIN.START','BIN.END', 'COUNT')
+binned.raw2 <- merge(gc_content,raw_count,by=c('CHR','BIN.START','BIN.END'))
+binned.raw <- cbind(SAMPLE, binned.raw)
 
-gc_content <- read.table("/home/jmeester/Internship/bins500bp_gc.bed",as.is=T,header=F,sep="\t")
-colnames(gc_content) <- c('CHR','BIN.START','BIN.END', 'BIN.GC.CONTENT', 'BIN.N.COUNT')
-raw_count <- read.table("/home/jmeester/Internship/countfiles/106282.count.autosomal.norm", as.is=T,header=F,sep=" ")
-colnames(raw_count) <- c('CHR','BIN.START','BIN.END', 'count', 'total_sample', 'total_pop', 'COUNT')
-binned.raw <- merge(gc_content,raw_count,by=c('CHR','BIN.START','BIN.END'))
+#gc_content <- read.table("/home/jmeester/Internship/bins500bp_gc.bed",as.is=T,header=F,sep="\t")
+#colnames(gc_content) <- c('CHR','BIN.START','BIN.END', 'BIN.GC.CONTENT', 'BIN.N.COUNT')
+#raw_count <- read.table("/home/jmeester/Internship/countfiles/108995.count", as.is=T,header=F,sep=" ")
+#colnames(raw_count) <- c('CHR','BIN.START','BIN.END', 'count', 'total_sample', 'total_pop', 'COUNT')
+#binned.raw <- merge(gc_content,raw_count,by=c('CHR','BIN.START','BIN.END'))
 
 #summary(binned.raw)
 
@@ -80,7 +82,10 @@ sample.gc.auto.gr <- sub("COUNT","GC.AUTO.GR",sample.count)
 noNs <- subset(binned.raw,binned.raw$BIN.N.COUNT==0)
 noNs.notEmpty <- subset(noNs,noNs[ncol(noNs)]>0)
 
+print("Calculating gam")
 noNs.notEmpty.gam <- gam(noNs.notEmpty[,ncol(noNs.notEmpty)]~noNs.notEmpty$BIN.GC.CONTENT)
+
+print("Correcting")
 gam.predicted <- data.frame(predict.gam(noNs.notEmpty.gam))
 
 #e <- ggplot(noNs.notEmpty, aes(x=BIN.GC.CONTENT, y=noNs.notEmpty[,ncol(noNs.notEmpty)]))
@@ -90,11 +95,11 @@ gam.predicted <- data.frame(predict.gam(noNs.notEmpty.gam))
 #############################
 
 
-print("Calculating loess")
-noNs.notEmpty.loess <- loess(noNs.notEmpty[,ncol(noNs.notEmpty)]~noNs.notEmpty$BIN.GC.CONTENT)
+#print("Calculating loess")
+#noNs.notEmpty.loess <- loess(noNs.notEmpty[,ncol(noNs.notEmpty)]~noNs.notEmpty$BIN.GC.CONTENT)
 
-print("Correcting")
-loess.predicted <- data.frame(predict(noNs.notEmpty.loess,noNs.notEmpty$BIN.GC.CONTENT))
+#print("Correcting")
+#loess.predicted <- data.frame(predict(noNs.notEmpty.loess,noNs.notEmpty$BIN.GC.CONTENT))
 
 
 correction.factor <- median(noNs.notEmpty[,ncol(noNs.notEmpty)])/gam.predicted
@@ -119,16 +124,20 @@ write(autoMedian,file = paste(basename,"autoMedian",sep="."),sep="")
 #write(ffY,file = paste(basename,"fetal.fraction.Y",sep="."),sep="")
 #=====================================================================================================
 
+#add corrected GC-count to the original count file
 binned.corrected <- merge(binned.raw,noNs.notEmpty,all.x=TRUE,by=names(binned.raw))
 binned.corrected[[sample.gc]][is.na(binned.corrected[[sample.gc]])] <- 0
 
+#subset only the autosoma chromosomes
 binned.corrected.auto <- subset(binned.corrected,!(binned.corrected$CHR == "X" | binned.corrected$CHR == "Y"))
 #binned.corrected.auto.X <- subset(binned.corrected,!(binned.corrected$CHR == "Y"))
 #binned.corrected.auto.Y <- subset(binned.corrected,!(binned.corrected$CHR == "X"))
 
+#correct for the total number of counts for that sample (for both raw reads and gc corrected counts)
 binned.corrected[[sample.gr10M]] <- 10000000 * binned.corrected[[sample.count]]/sum(binned.corrected[[sample.count]])
 binned.corrected[[sample.gc.gr10M]] <-  10000000 * binned.corrected[[sample.gc]]/sum(binned.corrected[[sample.gc]])
 
+#correct for the total number of counts of only the autosomal chromosomes
 binned.corrected[[sample.auto.gr10M]] <- 10000000 * binned.corrected[[sample.count]]/sum(binned.corrected.auto[[sample.count]])
 #binned.corrected[[sample.auto.X.gr10M]] <- 10000000 * binned.corrected[[sample.count]]/sum(binned.corrected.auto.X[[sample.count]])
 #binned.corrected[[sample.auto.Y.gr10M]] <- 10000000 * binned.corrected[[sample.count]]/sum(binned.corrected.auto.Y[[sample.count]])
@@ -146,6 +155,7 @@ binned.corrected[[sample.gc.auto.gr10M]] <-  10000000 * binned.corrected[[sample
 #}
 #=====================================================================================================
 
+
 binned.corrected[[sample.auto.gr10M]][binned.corrected$CHR=="X" | binned.corrected$CHR=="Y"] <- 0
 #binned.corrected[[sample.auto.X.gr10M]][binned.corrected$CHR=="Y"] <- 0
 #binned.corrected[[sample.auto.Y.gr10M]][binned.corrected$CHR=="X"] <- 0
@@ -158,10 +168,9 @@ binned.corrected[[sample.gc.auto.gr10M]][binned.corrected$CHR=="X" | binned.corr
 
 print("Aggregating per chromosome")
 
-chr.corrected <- aggregate(subset(binned.corrected,select=-c(SAMPLE,CHR,BIN.START,BIN.END,BIN.GC.CONTENT,BIN.N.COUNT)),by=list(binned.corrected$SAMPLE,binned.corrected$CHR),FUN=sum)
-colnames(chr.corrected)<-c("SAMPLE","CHR",sample.count,sample.gc,sample.gr,sample.gc.gr,
-				sample.auto.gr,sample.auto.X.gr,sample.auto.Y.gr,
-				sample.gc.auto.gr,sample.gc.auto.X.F.gr,sample.gc.auto.X.M.gr,sample.gc.auto.Y.F.gr,sample.gc.auto.Y.M.gr)
+chr.corrected <- aggregate(subset(binned.corrected,select=-c(SAMPLE,CHR,BIN.START,BIN.END,BIN.GC.CONTENT,BIN.N.COUNT)),by=list(binned.corrected$SAMPLE, binned.corrected$CHR),FUN=sum)
+colnames(chr.corrected)<-c("SAMPLE","CHR",sample.count,sample.gc,sample.gr,sample.gc.gr,sample.auto.gr,sample.gc.auto.gr)
+
 
 chr.corrected[[sample.gr]] <- chr.corrected[[sample.gr]] / 10000000
 chr.corrected[[sample.gc.gr]] <- chr.corrected[[sample.gc.gr]] / 10000000
@@ -187,5 +196,6 @@ chr.corrected[[sample.gc.auto.gr]][chr.corrected$CHR=="X" | chr.corrected$CHR=="
 #chr.corrected[[sample.gc.auto.Y.M.gr]][chr.corrected$CHR=="X"] <- 0
 
 print("Writing")
-write.csv(binned.corrected,binned.csv, row.names=FALSE)
-write.csv(chr.corrected,chr.csv, row.names=FALSE)
+?write.csv
+write.csv(binned.corrected, file=paste(basename,SAMPLE,"binned.csv", sep = "."), row.names=FALSE)
+write.csv(chr.corrected, file=paste(basename,SAMPLE,"chr.csv", sep = "."), row.names=FALSE)
