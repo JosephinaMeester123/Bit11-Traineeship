@@ -1,34 +1,25 @@
 #READ DATA
 
 #library(gam)
-#library(ggplot2)
 library(mgcv)
 # ARGUMENT :
 #  1 : input file (counts / bins)
-#  2 : output file : normalized counts/bins
-#  3 : output file : chromosome based counts (?)
-#  4 : output file : basename for median / ff
-#  5 : seqFF	   : seqFF value
-#  6 : refdir      : reference dir for X & Y correction files
-
+#  2 : sample name
+#  3 : output folder
 
 args<-commandArgs(TRUE)
 #binned.raw.counts.txt <- args[1]
 binned.raw.counts.txt <- "/home/jmeester/Internship/countfiles/108995.count"
 
-#SAMPLE <- args[5]
+#SAMPLE <- args[2]
 SAMPLE <- 108995
 
-#binned.csv <- args[2]
 binned.csv <- paste("/home/jmeester/Internship/GC/", SAMPLE, ".binned.csv", sep="")
 
-#chr.csv <- args[3]
 chr.csv <- paste("/home/jmeester/Internship/GC/", SAMPLE, ".chr.csv", sep="")
 
-#basename <- args[4]
+#output folder <- args[3]
 basename <- "/home/jmeester/Internship/GC/"
-
-#refdir <- args[6]
 
 
 #read gc content file
@@ -40,8 +31,9 @@ raw_count <- read.table(binned.raw.counts.txt, as.is=T,header=F,sep="\t")
 colnames(raw_count) <- c('CHR','BIN.START','BIN.END', 'COUNT')
 
 #merge gc conent file with raw count file and add sample name
-binned.raw2 <- merge(gc_content,raw_count,by=c('CHR','BIN.START','BIN.END'))
-binned.raw <- cbind(SAMPLE, binned.raw)
+merged <- merge(gc_content,raw_count,by=c('CHR','BIN.START','BIN.END'))
+binned.raw <- cbind(SAMPLE, merged)
+
 
 #last column
 sample.count <- names(binned.raw)[ncol(binned.raw)]
@@ -59,10 +51,11 @@ sample.auto.gr <- sub("COUNT","AUTO.GR",sample.count)
 sample.gc.auto.gr10M <- sub("COUNT","GC.AUTO.GR10M",sample.count)
 sample.gc.auto.gr <- sub("COUNT","GC.AUTO.GR",sample.count)
 
+
 #ignore bins that have N's
 noNs <- subset(binned.raw,binned.raw$BIN.N.COUNT==0)
 noNs.notEmpty <- subset(noNs,noNs[ncol(noNs)]>0)
-
+colnames(raw_count) <- c('CHR','BIN.START','BIN.END', 'COUNT')
 
 ##########################
 
@@ -82,7 +75,7 @@ noNs.notEmpty[[sample.gc]] <- round(100*noNs.notEmpty[,ncol(noNs.notEmpty)]*corr
 
 #=====================================================================================================
 autoMedian=median(noNs.notEmpty[[sample.gc]][noNs.notEmpty$CHR!="X"&noNs.notEmpty$CHR!="Y"])
-write(autoMedian,file = paste(basename,"autoMedian",sep="."),sep="")
+write(autoMedian,file = paste(basename,SAMPLE,".autoMedian",sep=""))
 #=====================================================================================================
 
 
@@ -125,5 +118,5 @@ chr.corrected[[sample.auto.gr]][chr.corrected$CHR=="X" | chr.corrected$CHR=="Y"]
 chr.corrected[[sample.gc.auto.gr]][chr.corrected$CHR=="X" | chr.corrected$CHR=="Y"] <- 0
 
 print("Writing")
-write.csv(binned.corrected, file=paste(basename,SAMPLE,"binned.csv", sep = "."), row.names=FALSE)
-write.csv(chr.corrected, file=paste(basename,SAMPLE,"chr.csv", sep = "."), row.names=FALSE)
+write.csv(binned.corrected, file=paste(basename,SAMPLE,"binned.csv", sep = ""), row.names=FALSE)
+write.csv(chr.corrected, file=paste(basename,SAMPLE,"chr.csv", sep = ""), row.names=FALSE)
