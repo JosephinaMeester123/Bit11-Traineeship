@@ -8,18 +8,18 @@ library(mgcv)
 #  3 : output folder
 
 args<-commandArgs(TRUE)
-#binned.raw.counts.txt <- args[1]
-binned.raw.counts.txt <- "/home/jmeester/Internship/countfiles/108995.count"
+binned.raw.counts.txt <- args[1]
+#binned.raw.counts.txt <- "/home/jmeester/Internship/countfiles/108995.count"
 
-#SAMPLE <- args[2]
-SAMPLE <- 108995
+SAMPLE <- args[2]
+#SAMPLE <- 108995
 
 binned.csv <- paste("/home/jmeester/Internship/GC/", SAMPLE, ".binned.csv", sep="")
 
 chr.csv <- paste("/home/jmeester/Internship/GC/", SAMPLE, ".chr.csv", sep="")
 
-#output folder <- args[3]
-basename <- "/home/jmeester/Internship/GC/"
+basename <- args[3]
+#basename <- "/home/jmeester/Internship/GC/"
 
 
 #read gc content file
@@ -118,5 +118,5 @@ chr.corrected[[sample.auto.gr]][chr.corrected$CHR=="X" | chr.corrected$CHR=="Y"]
 chr.corrected[[sample.gc.auto.gr]][chr.corrected$CHR=="X" | chr.corrected$CHR=="Y"] <- 0
 
 print("Writing")
-write.csv(binned.corrected, file=paste(basename,SAMPLE,"binned.csv", sep = ""), row.names=FALSE)
-write.csv(chr.corrected, file=paste(basename,SAMPLE,"chr.csv", sep = ""), row.names=FALSE)
+write.csv(binned.corrected, file=paste(basename,SAMPLE,".binned.csv", sep = ""), row.names=FALSE)
+write.csv(chr.corrected, file=paste(basename,SAMPLE,".chr.csv", sep = ""), row.names=FALSE)
