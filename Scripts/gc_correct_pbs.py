@@ -70,7 +70,7 @@ with open ("sample_list.txt", "r") as sample_list:
                         pbs_file.write("#PBS -M " + email + "\n")
                         pbs_file.write("#PBS -V \n")
                         pbs_file.write("#PBS -A default \n")
-                        pbs_file.write("/opt/software/miniconda_rnaseq/bin/Rscript gcCorrectWGS.R " + filename + sample + output_dir)
+                        pbs_file.write("/opt/software/miniconda_rnaseq/bin/Rscript /home/jmeester/Internship/Scripts/gcCorrectWGS.R " + filename + " " + sample + " " + output_dir)
 			pbs_file.write("\n")
 		Popen(["qsub", pbs_scriptname])
 
